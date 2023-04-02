@@ -1,0 +1,21 @@
+{
+    "id": "combatactivators",
+    "name": "Combat Activators",
+    "author": "President Matt Damon",
+    "utility": "true",
+    "version": { "major":"1", "minor": "0", "patch": "0" },
+    "description": "Abilities that can be activated during combat.",
+    "gameVersion": "0.95.1a-RC6",
+    "jars":["jars/CombatActivators.jar"],
+    "modPlugin":"activators.CombatActivatorsModPlugin",
+    "dependencies": [
+        {
+            "id": "lw_lazylib",
+            "name": "LazyLib",
+        },
+        {
+            "id": "MagicLib",
+            "name": "MagicLib",
+        }
+    ]
+}

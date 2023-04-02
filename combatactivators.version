@@ -1,0 +1,11 @@
+{
+    "masterVersionFile":"https://raw.githubusercontent.com/scardwell15/combatactivators/main/combatactivators.version",
+    "modName":"Combat Activators",
+    "modThreadId":24660,
+    "modVersion":
+    {
+        "major":1,
+        "minor":0,
+        "patch":0
+    }
+}

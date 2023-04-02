@@ -1,0 +1,9 @@
+{
+	"ActivatorStates":{
+		"READY": "READY",
+		"IN": "ACTIVE",
+		"ACTIVE": "ACTIVE",
+		"OUT": "ACTIVE",
+		"COOLDOWN": ""
+	}
+}
