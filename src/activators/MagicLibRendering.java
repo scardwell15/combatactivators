@@ -132,7 +132,7 @@ public abstract class MagicLibRendering {
             borderCol = BLUCOLOR;
         }
         float alpha = 1f;
-        if (Global.getCombatEngine().isUIShowingDialog()) {
+        if (Global.getCombatEngine().getCombatUI() == null || Global.getCombatEngine().isUIShowingDialog()) {
             return;
         }
         Color shadowcolor = new Color(Color.BLACK.getRed() / 255f, Color.BLACK.getGreen() / 255f, Color.BLACK.getBlue() / 255f,
