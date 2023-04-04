@@ -2,10 +2,18 @@ package activators
 
 import com.fs.starfarer.api.Global
 import com.fs.starfarer.api.combat.ShipAPI
-import data.scripts.util.MagicSettings
+import lunalib.lunaSettings.LunaSettings
+import lunalib.lunaSettings.LunaSettingsListener
 import org.lwjgl.util.vector.Vector2f
 
 object ActivatorManager {
+    var keyList: List<Int> = mutableListOf()
+
+    fun initialize() {
+        reloadKeys()
+        Global.getSector().listenerManager.addListener(LunaKeybindSettingsListener(), true)
+    }
+
     @JvmStatic
     fun addActivator(ship: ShipAPI, activator: CombatActivator) {
         var activators: MutableMap<Class<*>, CombatActivator>? =
@@ -18,11 +26,10 @@ object ActivatorManager {
         if (!activators.containsKey(activator.javaClass)) {
             activators[activator.javaClass] = activator
 
-            val keyList = MagicSettings.getList("combatactivators", "keys")
             if (activators.size > keyList.size) {
                 activator.key = "N/A"
             } else {
-                activator.key = MagicSettings.getList("combatactivators", "keys")[activators.size - 1]
+                activator.keyIndex = activators.size - 1
             }
 
             activator.init()
@@ -68,5 +75,21 @@ object ActivatorManager {
             return ArrayList(map.values)
         }
         return null
+    }
+
+    fun reloadKeys() {
+        keyList = mutableListOf(
+            LunaSettings.getInt("combatactivators","combatActivators_KeyBind1")!!,
+            LunaSettings.getInt("combatactivators","combatActivators_KeyBind2")!!,
+            LunaSettings.getInt("combatactivators","combatActivators_KeyBind3")!!,
+            LunaSettings.getInt("combatactivators","combatActivators_KeyBind4")!!,
+            LunaSettings.getInt("combatactivators","combatActivators_KeyBind5")!!,
+        ).filter { it != 0 }
+    }
+}
+
+class LunaKeybindSettingsListener: LunaSettingsListener {
+    override fun settingsChanged(modID: String) {
+        ActivatorManager.reloadKeys()
     }
 }

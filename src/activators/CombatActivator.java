@@ -10,10 +10,10 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
-import java.math.MathContext;
 
 public abstract class CombatActivator {
     protected String key = "N/A";
+    protected int keyIndex = -1;
     protected boolean inited = false;
     protected final ShipAPI ship;
     protected final MutableShipStatsAPI stats;
@@ -38,7 +38,6 @@ public abstract class CombatActivator {
 
     /**
      * Called after key is set and activator is added to ship. Sets up intervals and duration values.
-     *
      */
     protected final void init() {
         if (inited) return;
@@ -66,6 +65,7 @@ public abstract class CombatActivator {
     /**
      * How long the activator is in State.IN for. To modify after adding the subsystem to the ship, use
      * setInDuration().
+     *
      * @return
      */
     public float getBaseInDuration() {
@@ -83,6 +83,7 @@ public abstract class CombatActivator {
     /**
      * How long the activator is in State.OUT for. To modify after adding the subsystem to the ship, use
      * setOutDuration().
+     *
      * @return
      */
     public float getBaseOutDuration() {
@@ -92,6 +93,7 @@ public abstract class CombatActivator {
     /**
      * How long the activator is in State.COOLDOWN for. To modify after adding the subsystem to the ship, use
      * setCooldownDuration().
+     *
      * @return
      */
     public abstract float getBaseCooldownDuration();
@@ -140,13 +142,11 @@ public abstract class CombatActivator {
         return 0f;
     }
 
-    public boolean canUseWhileOverloaded()
-    {
+    public boolean canUseWhileOverloaded() {
         return false;
     }
 
-    public boolean canUseWhileVenting()
-    {
+    public boolean canUseWhileVenting() {
         return false;
     }
 
@@ -222,6 +222,12 @@ public abstract class CombatActivator {
      * @return
      */
     public boolean isKeyDown() {
+        if (getKeyIndex() >= 0) {
+            if (ActivatorManager.INSTANCE.getKeyList().size() > getKeyIndex()) {
+                return Keyboard.isKeyDown(ActivatorManager.INSTANCE.getKeyList().get(getKeyIndex()));
+            }
+            return false;
+        }
         if (getKey().equals("LALT")) {
             return Keyboard.isKeyDown(Keyboard.KEY_LMENU);
         }
@@ -304,6 +310,14 @@ public abstract class CombatActivator {
         this.key = key;
     }
 
+    public int getKeyIndex() {
+        return keyIndex;
+    }
+
+    public void setKeyIndex(int keyIndex) {
+        this.keyIndex = keyIndex;
+    }
+
     public State getState() {
         return state;
     }
@@ -349,9 +363,10 @@ public abstract class CombatActivator {
     /**
      * Sets the in duration. If the state is currently IN, then the stateInterval will be affected according
      * to the preserve parameter.
+     *
      * @param inDuration
-     * @param preserve If true, time elapsed in current interval will be preserved.
-     *                 Otherwise stateInterval will be reset to 0 elapsed time, as if the interval is reset.
+     * @param preserve   If true, time elapsed in current interval will be preserved.
+     *                   Otherwise stateInterval will be reset to 0 elapsed time, as if the interval is reset.
      */
     public void setInDuration(float inDuration, boolean preserve) {
         if (state == State.IN) {
@@ -374,9 +389,10 @@ public abstract class CombatActivator {
     /**
      * Sets the active duration. If the state is currently ACTIVE, then the stateInterval will be affected according
      * to the preserve parameter.
+     *
      * @param activeDuration
-     * @param preserve If true, time elapsed in current interval will be preserved.
-     *                 Otherwise stateInterval will be reset to 0 elapsed time, as if the interval is reset.
+     * @param preserve       If true, time elapsed in current interval will be preserved.
+     *                       Otherwise stateInterval will be reset to 0 elapsed time, as if the interval is reset.
      */
     public void setActiveDuration(float activeDuration, boolean preserve) {
         if (state == State.ACTIVE) {
@@ -399,9 +415,10 @@ public abstract class CombatActivator {
     /**
      * Sets the out duration. If the state is currently OUT, then the stateInterval will be affected according
      * to the preserve parameter.
+     *
      * @param outDuration
-     * @param preserve If true, time elapsed in current interval will be preserved.
-     *                 Otherwise stateInterval will be reset to 0 elapsed time, as if the interval is reset.
+     * @param preserve    If true, time elapsed in current interval will be preserved.
+     *                    Otherwise stateInterval will be reset to 0 elapsed time, as if the interval is reset.
      */
     public void setOutDuration(float outDuration, boolean preserve) {
         if (state == State.OUT) {
@@ -424,9 +441,10 @@ public abstract class CombatActivator {
     /**
      * Sets the cooldown duration. If the state is currently COOLDOWN, then the stateInterval will be affected according
      * to the preserve parameter.
+     *
      * @param cooldownDuration
-     * @param preserve If true, time elapsed in current interval will be preserved.
-     *                 Otherwise stateInterval will be reset to 0 elapsed time, as if the interval is reset.
+     * @param preserve         If true, time elapsed in current interval will be preserved.
+     *                         Otherwise stateInterval will be reset to 0 elapsed time, as if the interval is reset.
      */
     public void setCooldownDuration(float cooldownDuration, boolean preserve) {
         if (state == State.COOLDOWN) {
@@ -441,6 +459,7 @@ public abstract class CombatActivator {
 
     /**
      * If state is IN, ACTIVE, or OUT.
+     *
      * @return
      */
     public boolean isOn() {
@@ -449,6 +468,7 @@ public abstract class CombatActivator {
 
     /**
      * If state is READY or COOLDOWN.
+     *
      * @return
      */
     public boolean isOff() {
@@ -464,9 +484,10 @@ public abstract class CombatActivator {
 
     /**
      * Sets the charge interval duration.
+     *
      * @param chargeGenerationDuration
-     * @param preserve If true, time elapsed in current interval will be preserved.
-     *                 Otherwise chargeInterval will be reset to 0 elapsed time, as if the interval is reset.
+     * @param preserve                 If true, time elapsed in current interval will be preserved.
+     *                                 Otherwise chargeInterval will be reset to 0 elapsed time, as if the interval is reset.
      */
     public void setChargeGenerationDuration(float chargeGenerationDuration, boolean preserve) {
         this.chargeGenerationDuration = chargeGenerationDuration;
@@ -538,7 +559,14 @@ public abstract class CombatActivator {
     public void drawHUDBar(Vector2f barLoc) {
         MagicLibRendering.setTextAligned(LazyFont.TextAlignment.LEFT);
 
-        String nameText = String.format("%s (%s)", getDisplayText(), getKey());
+        String keyText = getKey();
+        if (getKeyIndex() >= 0) {
+            if (ActivatorManager.INSTANCE.getKeyList().size() > getKeyIndex()) {
+                keyText = Keyboard.getKeyName(ActivatorManager.INSTANCE.getKeyList().get(getKeyIndex()));
+            }
+        }
+
+        String nameText = String.format("%s (%s)", getDisplayText(), keyText);
         float nameWidth = MagicLibRendering.getTextWidth(nameText);
         MagicLibRendering.addText(ship, nameText, getHUDColor(), Vector2f.add(barLoc, new Vector2f(0, 10), null));
 

@@ -1,0 +1,9 @@
+fieldID,fieldName,fieldType,defaultValue,secondaryValue,fieldDescription,minValue,maxValue,tab
+combatActivators_KeyBindHeader,Combat Activators,Header,Keybinds,,,,,
+combatActivators_KeyBindText,Description,Text,"Keybinds for activators. They are used in order. If any are empty they will be ignored and the next available keybind will be used.
+",,,,,
+combatActivators_KeyBind1,Keybind 1,Keycode,56,,"First assigned keybind",,,
+combatActivators_KeyBind2,Keybind 2,Keycode,46,,"Second assigned keybind",,,
+combatActivators_KeyBind3,Keybind 3,Keycode,35,,"Third assigned keybind",,,
+combatActivators_KeyBind4,Keybind 4,Keycode,36,,"Fourth assigned keybind",,,
+combatActivators_KeyBind5,Keybind 5,Keycode,49,,"Fifth assigned keybind",,,
