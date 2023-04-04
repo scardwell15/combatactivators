@@ -552,9 +552,9 @@ public abstract class CombatActivator {
         //bug: when state text is blank, ammo text is rendered again where the state text would be.
         String stateText = getStateText();
         if (!stateText.isEmpty()) {
-            MagicLibRendering.addText(ship, getStateText(), getHUDColor(), Vector2f.add(barLoc, new Vector2f(12 + 59, 10), null));
+            MagicLibRendering.addText(ship, getStateText(), getHUDColor(), Vector2f.add(barLoc, new Vector2f(12 + 4 + 59, 10), null));
         }
-        MagicLibRendering.addBar(ship, getBarFill(), getHUDColor(), getHUDColor(), 0f, Vector2f.add(barLoc, new Vector2f(8, 0), null));
+        MagicLibRendering.addBar(ship, getBarFill(), getHUDColor(), getHUDColor(), 0f, Vector2f.add(barLoc, new Vector2f(12, 0), null));
     }
 
     public enum State {

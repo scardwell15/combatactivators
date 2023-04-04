@@ -1,7 +1,6 @@
 package activators
 
 import com.fs.starfarer.api.combat.BaseEveryFrameCombatPlugin
-import com.fs.starfarer.api.combat.ViewportAPI
 import com.fs.starfarer.api.input.InputEventAPI
 
 class ActivatorCombatPlugin : BaseEveryFrameCombatPlugin() {

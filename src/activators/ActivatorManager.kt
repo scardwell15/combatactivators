@@ -45,6 +45,11 @@ object ActivatorManager {
 
     @JvmStatic
     fun drawActivators() {
+        if (Global.getCombatEngine().combatUI != null
+            && (Global.getCombatEngine().combatUI.isShowingCommandUI || Global.getCombatEngine().combatUI.isShowingDeploymentDialog)) {
+            return
+        }
+
         Global.getCombatEngine().playerShip?.let { ship ->
             getActivators(ship)?.let {
                 var lastVec = MagicLibRendering.getHUDRightOffset(ship)
