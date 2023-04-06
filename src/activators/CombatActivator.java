@@ -3,6 +3,7 @@ package activators;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.MutableShipStatsAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
+import com.fs.starfarer.api.combat.ViewportAPI;
 import com.fs.starfarer.api.util.IntervalUtil;
 import lombok.Getter;
 import org.lazywizard.lazylib.ui.LazyFont;
@@ -23,6 +24,7 @@ public abstract class CombatActivator {
     protected IntervalUtil stateInterval;
     protected int charges = getMaxCharges();
     protected IntervalUtil chargeInterval;
+    protected boolean activeElapsed = false;
 
     private float inDuration = -1f;
     private float activeDuration = -1f;
@@ -267,6 +269,7 @@ public abstract class CombatActivator {
                 onActivate();
 
                 if (isToggle() && state == State.ACTIVE && stateInterval.intervalElapsed()) {
+                    activeElapsed = false;
                     state = State.OUT;
                     stateInterval.setInterval(getOutDuration(), getOutDuration());
                 } else {
@@ -284,14 +287,19 @@ public abstract class CombatActivator {
                 state = State.ACTIVE;
                 stateInterval.setInterval(getActiveDuration(), getActiveDuration());
             } else if (state == State.OUT) {
+                activeElapsed = false;
                 state = State.COOLDOWN;
                 stateInterval.setInterval(getCooldownDuration(), getCooldownDuration());
                 onFinished();
             } else if (state == State.COOLDOWN) {
                 state = State.READY;
-            } else if (state == State.ACTIVE && !isToggle()) {
-                state = State.OUT;
-                stateInterval.setInterval(getOutDuration(), getOutDuration());
+            } else if (state == State.ACTIVE) {
+                activeElapsed = true;
+
+                if (!isToggle()) {
+                    state = State.OUT;
+                    stateInterval.setInterval(getOutDuration(), getOutDuration());
+                }
             }
         }
 
@@ -535,9 +543,15 @@ public abstract class CombatActivator {
     }
 
     public float getBarFill() {
-        float fill = this.getStateCompleteRatio();
-        if (state == State.ACTIVE) {
-            fill = 1f;
+        float fill = 0f;
+        if (state == State.IN) {
+            fill = stateInterval.getElapsed() / (this.getInDuration() + this.getActiveDuration());
+        } else if (state == State.ACTIVE) {
+            if (isToggle() && activeElapsed) {
+                fill = 1f;
+            } else {
+                fill = (this.getInDuration() + stateInterval.getElapsed()) / (this.getInDuration() + this.getActiveDuration());
+            }
         } else if (state == State.OUT) {
             fill = 1f - (stateInterval.getElapsed() / (this.getOutDuration() + this.getCooldownDuration()));
         } else if (state == State.COOLDOWN) {
@@ -549,6 +563,7 @@ public abstract class CombatActivator {
                 fill = 0f;
             }
         }
+
         return Math.max(Math.min(fill, 1f), 0f);
     }
 
@@ -556,7 +571,7 @@ public abstract class CombatActivator {
         return MagicLibRendering.GREENCOLOR;
     }
 
-    public void drawHUDBar(Vector2f barLoc) {
+    public void drawHUDBar(ViewportAPI viewport, Vector2f barLoc) {
         MagicLibRendering.setTextAligned(LazyFont.TextAlignment.LEFT);
 
         String keyText = getKey();
@@ -583,6 +598,10 @@ public abstract class CombatActivator {
             MagicLibRendering.addText(ship, getStateText(), getHUDColor(), Vector2f.add(barLoc, new Vector2f(12 + 4 + 59, 10), null));
         }
         MagicLibRendering.addBar(ship, getBarFill(), getHUDColor(), getHUDColor(), 0f, Vector2f.add(barLoc, new Vector2f(12, 0), null));
+    }
+
+    public void renderWorld(ViewportAPI viewport) {
+
     }
 
     public enum State {

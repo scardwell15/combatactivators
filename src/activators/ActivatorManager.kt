@@ -2,6 +2,7 @@ package activators
 
 import com.fs.starfarer.api.Global
 import com.fs.starfarer.api.combat.ShipAPI
+import com.fs.starfarer.api.combat.ViewportAPI
 import lunalib.lunaSettings.LunaSettings
 import lunalib.lunaSettings.LunaSettingsListener
 import org.lwjgl.util.vector.Vector2f
@@ -51,7 +52,7 @@ object ActivatorManager {
     }
 
     @JvmStatic
-    fun drawActivators() {
+    fun drawActivatorsUI(viewport: ViewportAPI) {
         if (Global.getCombatEngine().combatUI != null
             && (Global.getCombatEngine().combatUI.isShowingCommandUI || Global.getCombatEngine().combatUI.isShowingDeploymentDialog)) {
             return
@@ -61,9 +62,19 @@ object ActivatorManager {
             getActivators(ship)?.let {
                 var lastVec = MagicLibRendering.getHUDRightOffset(ship)
                 for (activator in it) {
-                    activator.drawHUDBar(lastVec)
+                    activator.drawHUDBar(viewport, lastVec)
                     lastVec = Vector2f.add(lastVec, Vector2f(0f, 22f), null)
                 }
+            }
+        }
+    }
+
+    @JvmStatic
+    fun drawActivatorsWorld(viewport: ViewportAPI) {
+        val ships: List<ShipAPI> = Global.getCombatEngine().ships
+        for (ship in ships) {
+            getActivators(ship)?.forEach {
+                it.renderWorld(viewport)
             }
         }
     }

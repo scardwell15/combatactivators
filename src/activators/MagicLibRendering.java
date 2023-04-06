@@ -151,14 +151,14 @@ public abstract class MagicLibRendering {
         }
 
         // Global.getCombatEngine().getViewport().
-        openGL11ForText();
+        //openGL11ForText();
         TODRAW14.setText(text);
         // TODRAW10.setMaxHeight(26);
         TODRAW14.setColor(shadowcolor);
         TODRAW14.draw(shadowLoc);
         TODRAW14.setColor(color);
         TODRAW14.draw(boxLoc);
-        closeGL11ForText();
+        //closeGL11ForText();
     }
 
     public static void OpenGLBar(ShipAPI ship, float alpha, Color borderCol, Color innerCol, int fboxWidth, int hfboxWidth, float boxHeight, float boxWidth, int pixelHardfill, Vector2f shadowLoc, Vector2f boxLoc) {

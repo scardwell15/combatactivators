@@ -28,6 +28,12 @@ public class ShipAIData {
         }
         return returning;
     }
+
+    /**
+     * Returns the maximum range of all non-missile weapons on the ship, or a minimum of 1000.
+     * If this is a fighter, returns 500f if the fighter is returning, otherwise returns the attack run range determined by the spec.
+     * @return see above
+     */
     public float getEngagementRange() {
         float engagementRange = this.engagementRange;
         if (ship.getWing() != null) {
@@ -49,6 +55,22 @@ public class ShipAIData {
         }
 
         return engagementRange;
+    }
+
+    public float getAverageWeaponRange(boolean allowMissiles) {
+        float averageRange = 0f;
+        int countedWeapons = 0;
+
+        for (WeaponAPI weapon : ship.getUsableWeapons()) {
+            if (!allowMissiles && weapon.getType() == WeaponAPI.WeaponType.MISSILE) {
+                continue;
+            }
+
+            averageRange += weapon.getRange();
+            countedWeapons++;
+        }
+
+        return averageRange / countedWeapons;
     }
 
     /**
