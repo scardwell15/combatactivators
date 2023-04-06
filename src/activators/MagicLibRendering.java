@@ -144,21 +144,11 @@ public abstract class MagicLibRendering {
         final Vector2f boxLoc = new Vector2f(screenPos);
         final Vector2f shadowLoc = new Vector2f(screenPos.getX() + 1f, screenPos.getY() - 1f);
 
-        if (UIscaling != 1) {
-            boxLoc.scale(UIscaling);
-            shadowLoc.scale(UIscaling);
-            TODRAW14.setFontSize(10 * UIscaling);
-        }
-
-        // Global.getCombatEngine().getViewport().
-        //openGL11ForText();
         TODRAW14.setText(text);
-        // TODRAW10.setMaxHeight(26);
         TODRAW14.setColor(shadowcolor);
         TODRAW14.draw(shadowLoc);
         TODRAW14.setColor(color);
         TODRAW14.draw(boxLoc);
-        //closeGL11ForText();
     }
 
     public static void OpenGLBar(ShipAPI ship, float alpha, Color borderCol, Color innerCol, int fboxWidth, int hfboxWidth, float boxHeight, float boxWidth, int pixelHardfill, Vector2f shadowLoc, Vector2f boxLoc) {
