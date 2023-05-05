@@ -1,10 +1,12 @@
 package activators
 
 import com.fs.starfarer.api.BaseModPlugin
-import com.fs.starfarer.api.Global
 
 class CombatActivatorsModPlugin: BaseModPlugin() {
-    override fun onGameLoad(newGame: Boolean) {
+    override fun onApplicationLoad() {
         ActivatorManager.initialize()
+    }
+
+    override fun onGameLoad(newGame: Boolean) {
     }
 }

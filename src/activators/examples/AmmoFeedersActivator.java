@@ -50,7 +50,13 @@ public class AmmoFeedersActivator extends CombatActivator {
     @Override
     public void onActivate() {
         stats.getBallisticWeaponFluxCostMod().modifyMult(this.getDisplayText(), 0.5f);
-        stats.getBallisticRoFMult().modifyMult(this.getDisplayText(), 0.5f);
+        stats.getBallisticRoFMult().modifyMult(this.getDisplayText(), 2f);
+    }
+
+    @Override
+    public void onFinished() {
+        stats.getBallisticWeaponFluxCostMod().unmodify(this.getDisplayText());
+        stats.getBallisticRoFMult().unmodify(this.getDisplayText());
     }
 
     @Override

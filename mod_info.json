@@ -3,9 +3,9 @@
     "name": "Combat Activators",
     "author": "President Matt Damon",
     "utility": "true",
-    "version": { "major":"1", "minor": "0", "patch": "2" },
+    "version": { "major":"1", "minor": "0", "patch": "3" },
     "description": "Abilities that can be activated during combat.",
-    "gameVersion": "0.95.1a-RC6",
+    "gameVersion": "0.96a",
     "jars":["jars/CombatActivators.jar"],
     "modPlugin":"activators.CombatActivatorsModPlugin",
     "dependencies": [

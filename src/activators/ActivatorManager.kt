@@ -1,5 +1,6 @@
 package activators
 
+import activators.examples.AmmoFeedersActivator
 import com.fs.starfarer.api.Global
 import com.fs.starfarer.api.combat.ShipAPI
 import com.fs.starfarer.api.combat.ViewportAPI
@@ -12,7 +13,7 @@ object ActivatorManager {
 
     fun initialize() {
         reloadKeys()
-        Global.getSector().listenerManager.addListener(LunaKeybindSettingsListener(), true)
+        LunaSettings.addListener(LunaKeybindSettingsListener())
     }
 
     @JvmStatic
@@ -53,8 +54,7 @@ object ActivatorManager {
 
     @JvmStatic
     fun drawActivatorsUI(viewport: ViewportAPI) {
-        if (Global.getCombatEngine().combatUI != null
-            && (Global.getCombatEngine().combatUI.isShowingCommandUI || Global.getCombatEngine().combatUI.isShowingDeploymentDialog)) {
+        if (Global.getCombatEngine().combatUI == null || Global.getCombatEngine().combatUI.isShowingCommandUI || Global.getCombatEngine().combatUI.isShowingDeploymentDialog) {
             return
         }
 

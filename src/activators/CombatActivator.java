@@ -571,15 +571,42 @@ public abstract class CombatActivator {
         return MagicLibRendering.GREENCOLOR;
     }
 
+    public String getKeyText() {
+        int keycode = -1;
+        if (getKeyIndex() >= 0 && ActivatorManager.INSTANCE.getKeyList().size() > getKeyIndex()) {
+            keycode = ActivatorManager.INSTANCE.getKeyList().get(getKeyIndex());
+        }
+
+        switch (keycode) {
+            case -1:
+                return "N/A";
+            case Keyboard.KEY_LMENU:
+                return "L-ALT";
+            case Keyboard.KEY_RMENU:
+                return "R-ALT";
+            case Keyboard.KEY_LCONTROL:
+                return "L-CTRL";
+            case Keyboard.KEY_RCONTROL:
+                return "R-CTRL";
+            case Keyboard.KEY_LSHIFT:
+                return "L-SHIFT";
+            case Keyboard.KEY_RSHIFT:
+                return "R-SHIFT";
+            case Keyboard.KEY_CAPITAL:
+                return "CAPS";
+            case Keyboard.KEY_RETURN:
+                return "ENTER";
+            case Keyboard.KEY_BACK:
+                return "BKSPC";
+            default:
+                return Keyboard.getKeyName(keycode).toUpperCase();
+        }
+    }
+
     public void drawHUDBar(ViewportAPI viewport, Vector2f barLoc) {
         MagicLibRendering.setTextAligned(LazyFont.TextAlignment.LEFT);
 
-        String keyText = getKey();
-        if (getKeyIndex() >= 0) {
-            if (ActivatorManager.INSTANCE.getKeyList().size() > getKeyIndex()) {
-                keyText = Keyboard.getKeyName(ActivatorManager.INSTANCE.getKeyList().get(getKeyIndex()));
-            }
-        }
+        String keyText = getKeyText();
 
         String nameText = String.format("%s (%s)", getDisplayText(), keyText);
         float nameWidth = MagicLibRendering.getTextWidth(nameText);
