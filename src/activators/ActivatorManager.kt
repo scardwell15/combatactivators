@@ -1,6 +1,7 @@
 package activators
 
 import activators.examples.AmmoFeedersActivator
+import activators.examples.ChargedDriveActivator
 import activators.examples.ToggledDriveActivator
 import com.fs.starfarer.api.Global
 import com.fs.starfarer.api.combat.ShipAPI
@@ -49,7 +50,7 @@ object ActivatorManager {
                 }
 
                 it.advanceEveryFrame()
-            } ?: addActivator(ship, ToggledDriveActivator(ship))
+            }
         }
     }
 

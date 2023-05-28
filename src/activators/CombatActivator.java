@@ -22,7 +22,7 @@ public abstract class CombatActivator {
 
     protected State state = State.READY;
     protected IntervalUtil stateInterval;
-    protected int charges = getMaxCharges();
+    protected int charges = -1;
     protected IntervalUtil chargeInterval;
     protected boolean activeElapsed = false;
 
@@ -50,6 +50,7 @@ public abstract class CombatActivator {
         this.outDuration = getBaseOutDuration();
         this.cooldownDuration = getBaseCooldownDuration();
         this.chargeGenerationDuration = getBaseChargeRechargeDuration();
+        this.charges = getMaxCharges();
 
         this.chargeInterval = new IntervalUtil(chargeGenerationDuration, chargeGenerationDuration);
         this.stateInterval = new IntervalUtil(inDuration, inDuration);
@@ -133,7 +134,7 @@ public abstract class CombatActivator {
     }
 
     public boolean hasCharges() {
-        return false;
+        return getMaxCharges() > 0;
     }
 
     public int getMaxCharges() {
