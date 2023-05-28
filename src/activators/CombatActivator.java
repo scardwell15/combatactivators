@@ -177,6 +177,10 @@ public abstract class CombatActivator {
             }
         }
 
+        if (isToggle() && state == State.ACTIVE && stateInterval.intervalElapsed()) {
+            return true;
+        }
+
         return state == State.READY;
     }
 
@@ -240,7 +244,7 @@ public abstract class CombatActivator {
     }
 
     public void advanceInternal(float amount) {
-        if (state != State.READY) {
+        if (state != State.READY && !stateInterval.intervalElapsed()) {
             stateInterval.advance(amount);
         }
 
