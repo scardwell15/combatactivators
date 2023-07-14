@@ -16,6 +16,8 @@ public abstract class CombatActivator {
     protected String key = "N/A";
     protected int keyIndex = -1;
     protected boolean inited = false;
+    protected boolean calledOnDeath = false;
+
     protected final ShipAPI ship;
     protected final MutableShipStatsAPI stats;
     protected final ShipAIData aiData;
@@ -39,9 +41,9 @@ public abstract class CombatActivator {
     }
 
     /**
-     * Called after key is set and activator is added to ship. Sets up intervals and duration values.
+     * Called after key is set and activator is added to ship. Sets up intervals and duration values. Always call super.
      */
-    protected final void init() {
+    protected void init() {
         if (inited) return;
 
         inited = true;
@@ -54,15 +56,14 @@ public abstract class CombatActivator {
 
         this.chargeInterval = new IntervalUtil(chargeGenerationDuration, chargeGenerationDuration);
         this.stateInterval = new IntervalUtil(inDuration, inDuration);
-
-        initialized();
     }
 
     /**
-     * Called after key is set, activator is added to ship, and intervals for charge and state are created.
+     * Whether to assign a key to this activator.
+     * @return
      */
-    protected void initialized() {
-
+    public boolean canAssignKey() {
+        return true;
     }
 
     /**
@@ -145,6 +146,10 @@ public abstract class CombatActivator {
         return 0f;
     }
 
+    public boolean usesChargesOnActivate() {
+        return true;
+    }
+
     public boolean canUseWhileOverloaded() {
         return false;
     }
@@ -173,7 +178,7 @@ public abstract class CombatActivator {
      */
     public boolean canActivateInternal() {
         if (!isToggle() || state == State.READY) {
-            if (hasCharges() && charges <= 0) {
+            if (usesChargesOnActivate() && hasCharges() && charges <= 0) {
                 return false;
             }
         }
@@ -186,6 +191,10 @@ public abstract class CombatActivator {
     }
 
     public abstract boolean shouldActivateAI(float amount);
+
+    public boolean getAdvancesWhileDead() {
+        return false;
+    }
 
     /**
      * Runs when the key is pressed to activate the activator.
@@ -201,6 +210,13 @@ public abstract class CombatActivator {
      */
     public void onFinished() {
 
+    }
+
+    /**
+     * When ship dies while system is active (IN, ACTIVE, OUT states)
+     */
+    public void onShipDeath() {
+        onFinished();
     }
 
     public void onStateSwitched(State oldState) {
@@ -229,6 +245,10 @@ public abstract class CombatActivator {
      * @return
      */
     public boolean isKeyDown() {
+        if (!canAssignKey()) {
+            return false;
+        }
+
         if (getKeyIndex() >= 0) {
             if (ActivatorManager.INSTANCE.getKeyList().size() > getKeyIndex()) {
                 return Keyboard.isKeyDown(ActivatorManager.INSTANCE.getKeyList().get(getKeyIndex()));
@@ -245,6 +265,18 @@ public abstract class CombatActivator {
     }
 
     public void advanceInternal(float amount) {
+        boolean alive = ship.isAlive() && !ship.isHulk() && ship.getOwner() != 100;
+        if (!alive) {
+            if (!calledOnDeath) {
+                if (isOn()) {
+                    onShipDeath();
+                }
+                calledOnDeath = true;
+            }
+        }
+
+        if (!getAdvancesWhileDead() && !alive) return;
+
         if (state != State.READY && !stateInterval.intervalElapsed()) {
             stateInterval.advance(amount);
         }
@@ -280,7 +312,7 @@ public abstract class CombatActivator {
                 } else {
                     state = State.IN;
                     stateInterval.setInterval(getInDuration(), getInDuration());
-                    if (hasCharges()) {
+                    if (hasCharges() && usesChargesOnActivate()) {
                         charges--;
                     }
                 }
@@ -578,7 +610,7 @@ public abstract class CombatActivator {
 
     public String getKeyText() {
         int keycode = -1;
-        if (getKeyIndex() >= 0 && ActivatorManager.INSTANCE.getKeyList().size() > getKeyIndex()) {
+        if (canAssignKey() && getKeyIndex() >= 0 && ActivatorManager.INSTANCE.getKeyList().size() > getKeyIndex()) {
             keycode = ActivatorManager.INSTANCE.getKeyList().get(getKeyIndex());
         }
 
@@ -611,9 +643,14 @@ public abstract class CombatActivator {
     public void drawHUDBar(ViewportAPI viewport, Vector2f barLoc) {
         MagicLibRendering.setTextAligned(LazyFont.TextAlignment.LEFT);
 
-        String keyText = getKeyText();
+        String nameText;
+        if (canAssignKey()) {
+            String keyText = getKeyText();
+            nameText = String.format("%s (%s)", getDisplayText(), keyText);
+        } else {
+            nameText = String.format("%s", getDisplayText());
+        }
 
-        String nameText = String.format("%s (%s)", getDisplayText(), keyText);
         float nameWidth = MagicLibRendering.getTextWidth(nameText);
         MagicLibRendering.addText(ship, nameText, getHUDColor(), Vector2f.add(barLoc, new Vector2f(0, 10), null));
 
@@ -624,7 +661,6 @@ public abstract class CombatActivator {
 
         MagicLibRendering.setTextAligned(LazyFont.TextAlignment.LEFT);
 
-        //bug: when state text is blank, ammo text is rendered again where the state text would be.
         String stateText = getStateText();
         if (!stateText.isEmpty()) {
             MagicLibRendering.addText(ship, getStateText(), getHUDColor(), Vector2f.add(barLoc, new Vector2f(12 + 4 + 59, 10), null));

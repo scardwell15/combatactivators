@@ -1,11 +1,9 @@
 package activators
 
-import activators.examples.AmmoFeedersActivator
-import activators.examples.ChargedDriveActivator
-import activators.examples.ToggledDriveActivator
 import com.fs.starfarer.api.Global
 import com.fs.starfarer.api.combat.ShipAPI
 import com.fs.starfarer.api.combat.ViewportAPI
+import com.fs.starfarer.api.util.IntervalUtil
 import lunalib.lunaSettings.LunaSettings
 import lunalib.lunaSettings.LunaSettingsListener
 import org.lwjgl.util.vector.Vector2f
@@ -30,7 +28,7 @@ object ActivatorManager {
         if (!activators.containsKey(activator.javaClass)) {
             activators[activator.javaClass] = activator
 
-            if (activators.size > keyList.size) {
+            if (!activator.canAssignKey() || activators.size > keyList.size) {
                 activator.key = "N/A"
             } else {
                 activator.keyIndex = activators.size - 1
@@ -92,17 +90,22 @@ object ActivatorManager {
 
     fun reloadKeys() {
         keyList = mutableListOf(
-            LunaSettings.getInt("combatactivators","combatActivators_KeyBind1")!!,
-            LunaSettings.getInt("combatactivators","combatActivators_KeyBind2")!!,
-            LunaSettings.getInt("combatactivators","combatActivators_KeyBind3")!!,
-            LunaSettings.getInt("combatactivators","combatActivators_KeyBind4")!!,
-            LunaSettings.getInt("combatactivators","combatActivators_KeyBind5")!!,
+            LunaSettings.getInt("combatactivators", "combatActivators_KeyBind1")!!,
+            LunaSettings.getInt("combatactivators", "combatActivators_KeyBind2")!!,
+            LunaSettings.getInt("combatactivators", "combatActivators_KeyBind3")!!,
+            LunaSettings.getInt("combatactivators", "combatActivators_KeyBind4")!!,
+            LunaSettings.getInt("combatactivators", "combatActivators_KeyBind5")!!,
         ).filter { it != 0 }
     }
 }
 
-class LunaKeybindSettingsListener: LunaSettingsListener {
+class LunaKeybindSettingsListener : LunaSettingsListener {
     override fun settingsChanged(modID: String) {
         ActivatorManager.reloadKeys()
     }
+}
+
+fun IntervalUtil.advanceAndCheckElapsed(amount: Float): Boolean {
+    this.advance(amount)
+    return this.intervalElapsed()
 }

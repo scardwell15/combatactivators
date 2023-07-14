@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class MagicLibRendering {
-    private static final float UIscaling = Global.getSettings().getScreenScaleMult();
+    public static final float UIscaling = Global.getSettings().getScreenScaleMult();
     private static final Vector2f PERCENTBARVEC1 = new Vector2f(21f, 0f);
     private static final Vector2f PERCENTBARVEC2 = new Vector2f(50f, 58f);
 
@@ -82,9 +82,28 @@ public abstract class MagicLibRendering {
      * @param screenPos   The position on the Screen.
      */
     public static void addBar(ShipAPI ship, float fill, Color innerColor, Color borderColor, float secondfill, Vector2f screenPos) {
-        final float boxWidth = 59 * UIscaling;
-        final float boxHeight = 6 * UIscaling;
+        addBar(ship, fill, innerColor, borderColor, secondfill, screenPos, 6 * UIscaling, 59 * UIscaling, true);
+    }
 
+    /**
+     * Draws a small UI bar above the flux bar. The HUD color change to blu when
+     * the ship is not alive. //TODO: Bug: When you left the battle, the hud
+     * keep for qew second, no solution found. //TODO: Bug: Also for other
+     * normal drawBox, when paused, they switch brutally of "color".
+     *
+     * @param ship        Ship concerned (the element will only be drawn if that ship
+     *                    is the player ship)
+     * @param fill        Filling level
+     * @param innerColor  Color of the bar. If null, use the vanilla HUD color.
+     * @param borderColor Color of the border. If null, use the vanilla HUD
+     *                    color.
+     * @param secondfill  Like the hardflux of the fluxbar. 0 per default.
+     * @param screenPos   The position on the Screen.
+     * @param boxHeight   Height of the drawn box.
+     * @param boxWidth    Width of the drawn box.
+     * @param drawBorders
+     */
+    public static void addBar(ShipAPI ship, float fill, Color innerColor, Color borderColor, float secondfill, Vector2f screenPos, float boxHeight, float boxWidth, boolean drawBorders) {
         final Vector2f boxLoc = new Vector2f(screenPos);
         final Vector2f shadowLoc = new Vector2f(boxLoc.getX() + 1f, boxLoc.getY() - 1f);
         boxLoc.scale(UIscaling);
@@ -114,8 +133,7 @@ public abstract class MagicLibRendering {
         int hfboxWidth = (int) (boxWidth * hardfill);
         int fboxWidth = (int) (boxWidth * fill);
 
-        OpenGLBar(ship, alpha, borderCol, innerCol, fboxWidth, hfboxWidth, boxHeight, boxWidth, pixelHardfill, shadowLoc, boxLoc);
-
+        OpenGLBar(ship, alpha, borderCol, innerCol, fboxWidth, hfboxWidth, boxHeight, boxWidth, pixelHardfill, shadowLoc, boxLoc, drawBorders);
     }
 
     /**
@@ -151,90 +169,92 @@ public abstract class MagicLibRendering {
         TODRAW14.draw(boxLoc);
     }
 
-    public static void OpenGLBar(ShipAPI ship, float alpha, Color borderCol, Color innerCol, int fboxWidth, int hfboxWidth, float boxHeight, float boxWidth, int pixelHardfill, Vector2f shadowLoc, Vector2f boxLoc) {
+    public static void OpenGLBar(ShipAPI ship, float alpha, Color borderCol, Color innerCol, int fboxWidth, int hfboxWidth, float boxHeight, float boxWidth, int pixelHardfill, Vector2f shadowLoc, Vector2f boxLoc, boolean drawBorders) {
         final int width = (int) (Display.getWidth() * Display.getPixelScaleFactor());
         final int height = (int) (Display.getHeight() * Display.getPixelScaleFactor());
 
         // Set OpenGL flags
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-            GL11.glViewport(0, 0, width, height);
-            GL11.glMatrixMode(GL11.GL_PROJECTION);
-            GL11.glPushMatrix();
-                GL11.glLoadIdentity();
-                GL11.glOrtho(0, width, 0, height, -1, 1);
-                GL11.glMatrixMode(GL11.GL_MODELVIEW);
-                GL11.glPushMatrix();
-                    GL11.glLoadIdentity();
-                    GL11.glDisable(GL11.GL_TEXTURE_2D);
-                    GL11.glEnable(GL11.GL_BLEND);
+        GL11.glViewport(0, 0, width, height);
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glPushMatrix();
+        GL11.glLoadIdentity();
+        GL11.glOrtho(0, width, 0, height, -1, 1);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glPushMatrix();
+        GL11.glLoadIdentity();
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glEnable(GL11.GL_BLEND);
 
-                        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-                        GL11.glTranslatef(0.01f, 0.01f, 0);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glTranslatef(0.01f, 0.01f, 0);
 
-                        if (ship.isAlive()) {
-                            // Render the drop shadow
-                            if (fboxWidth != 0) {
-                                GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
-                                    GL11.glColor4f(Color.BLACK.getRed() / 255f, Color.BLACK.getGreen() / 255f, Color.BLACK.getBlue() / 255f,
-                                            1f - Global.getCombatEngine().getCombatUI().getCommandUIOpacity());
-                                    GL11.glVertex2f(shadowLoc.x - 1, shadowLoc.y);
-                                    GL11.glVertex2f(shadowLoc.x + fboxWidth, shadowLoc.y);
-                                    GL11.glVertex2f(shadowLoc.x - 1, shadowLoc.y + boxHeight + 1);
-                                    GL11.glVertex2f(shadowLoc.x + fboxWidth, shadowLoc.y + boxHeight + 1);
-                                GL11.glEnd();
-                            }
-                        }
+        if (ship.isAlive()) {
+            // Render the drop shadow
+            if (fboxWidth != 0) {
+                GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+                GL11.glColor4f(Color.BLACK.getRed() / 255f, Color.BLACK.getGreen() / 255f, Color.BLACK.getBlue() / 255f,
+                        1f - Global.getCombatEngine().getCombatUI().getCommandUIOpacity());
+                GL11.glVertex2f(shadowLoc.x - 1, shadowLoc.y);
+                GL11.glVertex2f(shadowLoc.x + fboxWidth, shadowLoc.y);
+                GL11.glVertex2f(shadowLoc.x - 1, shadowLoc.y + boxHeight + 1);
+                GL11.glVertex2f(shadowLoc.x + fboxWidth, shadowLoc.y + boxHeight + 1);
+                GL11.glEnd();
+            }
+        }
 
-                        // Render the drop shadow of border.
-                        GL11.glBegin(GL11.GL_LINES);
-                            GL11.glColor4f(Color.BLACK.getRed() / 255f, Color.BLACK.getGreen() / 255f, Color.BLACK.getBlue() / 255f,
-                                    1f - Global.getCombatEngine().getCombatUI().getCommandUIOpacity());
-                            GL11.glVertex2f(shadowLoc.x + hfboxWidth + pixelHardfill, shadowLoc.y - 1);
-                            GL11.glVertex2f(shadowLoc.x + 3 + hfboxWidth + pixelHardfill, shadowLoc.y - 1);
-                            GL11.glVertex2f(shadowLoc.x + hfboxWidth + pixelHardfill, shadowLoc.y + boxHeight);
-                            GL11.glVertex2f(shadowLoc.x + 3 + hfboxWidth + pixelHardfill, shadowLoc.y + boxHeight);
-                            GL11.glVertex2f(shadowLoc.x + boxWidth, shadowLoc.y);
-                            GL11.glVertex2f(shadowLoc.x + boxWidth, shadowLoc.y + boxHeight);
+        if (drawBorders) {
+            // Render the drop shadow of border.
+            GL11.glBegin(GL11.GL_LINES);
+            GL11.glColor4f(Color.BLACK.getRed() / 255f, Color.BLACK.getGreen() / 255f, Color.BLACK.getBlue() / 255f,
+                    1f - Global.getCombatEngine().getCombatUI().getCommandUIOpacity());
+            GL11.glVertex2f(shadowLoc.x + hfboxWidth + pixelHardfill, shadowLoc.y - 1);
+            GL11.glVertex2f(shadowLoc.x + 3 + hfboxWidth + pixelHardfill, shadowLoc.y - 1);
+            GL11.glVertex2f(shadowLoc.x + hfboxWidth + pixelHardfill, shadowLoc.y + boxHeight);
+            GL11.glVertex2f(shadowLoc.x + 3 + hfboxWidth + pixelHardfill, shadowLoc.y + boxHeight);
+            GL11.glVertex2f(shadowLoc.x + boxWidth, shadowLoc.y);
+            GL11.glVertex2f(shadowLoc.x + boxWidth, shadowLoc.y + boxHeight);
 
-                            // Render the border transparency fix
-                            GL11.glColor4f(Color.BLACK.getRed() / 255f, Color.BLACK.getGreen() / 255f, Color.BLACK.getBlue() / 255f,
-                                    1f - Global.getCombatEngine().getCombatUI().getCommandUIOpacity());
-                            GL11.glVertex2f(boxLoc.x + hfboxWidth + pixelHardfill, boxLoc.y - 1);
-                            GL11.glVertex2f(boxLoc.x + 3 + hfboxWidth + pixelHardfill, boxLoc.y - 1);
-                            GL11.glVertex2f(boxLoc.x + hfboxWidth + pixelHardfill, boxLoc.y + boxHeight);
-                            GL11.glVertex2f(boxLoc.x + 3 + hfboxWidth + pixelHardfill, boxLoc.y + boxHeight);
-                            GL11.glVertex2f(boxLoc.x + boxWidth, boxLoc.y);
-                            GL11.glVertex2f(boxLoc.x + boxWidth, boxLoc.y + boxHeight);
+            // Render the border transparency fix
+            GL11.glColor4f(Color.BLACK.getRed() / 255f, Color.BLACK.getGreen() / 255f, Color.BLACK.getBlue() / 255f,
+                    1f - Global.getCombatEngine().getCombatUI().getCommandUIOpacity());
+            GL11.glVertex2f(boxLoc.x + hfboxWidth + pixelHardfill, boxLoc.y - 1);
+            GL11.glVertex2f(boxLoc.x + 3 + hfboxWidth + pixelHardfill, boxLoc.y - 1);
+            GL11.glVertex2f(boxLoc.x + hfboxWidth + pixelHardfill, boxLoc.y + boxHeight);
+            GL11.glVertex2f(boxLoc.x + 3 + hfboxWidth + pixelHardfill, boxLoc.y + boxHeight);
+            GL11.glVertex2f(boxLoc.x + boxWidth, boxLoc.y);
+            GL11.glVertex2f(boxLoc.x + boxWidth, boxLoc.y + boxHeight);
 
-                            // Render the border
-                            GL11.glColor4f(borderCol.getRed() / 255f, borderCol.getGreen() / 255f, borderCol.getBlue() / 255f,
-                                    alpha * (1 - Global.getCombatEngine().getCombatUI().getCommandUIOpacity()));
-                            GL11.glVertex2f(boxLoc.x + hfboxWidth + pixelHardfill, boxLoc.y - 1);
-                            GL11.glVertex2f(boxLoc.x + 3 + hfboxWidth + pixelHardfill, boxLoc.y - 1);
-                            GL11.glVertex2f(boxLoc.x + hfboxWidth + pixelHardfill, boxLoc.y + boxHeight);
-                            GL11.glVertex2f(boxLoc.x + 3 + hfboxWidth + pixelHardfill, boxLoc.y + boxHeight);
-                            GL11.glVertex2f(boxLoc.x + boxWidth, boxLoc.y);
-                            GL11.glVertex2f(boxLoc.x + boxWidth, boxLoc.y + boxHeight);
-                        GL11.glEnd();
+            // Render the border
+            GL11.glColor4f(borderCol.getRed() / 255f, borderCol.getGreen() / 255f, borderCol.getBlue() / 255f,
+                    alpha * (1 - Global.getCombatEngine().getCombatUI().getCommandUIOpacity()));
+            GL11.glVertex2f(boxLoc.x + hfboxWidth + pixelHardfill, boxLoc.y - 1);
+            GL11.glVertex2f(boxLoc.x + 3 + hfboxWidth + pixelHardfill, boxLoc.y - 1);
+            GL11.glVertex2f(boxLoc.x + hfboxWidth + pixelHardfill, boxLoc.y + boxHeight);
+            GL11.glVertex2f(boxLoc.x + 3 + hfboxWidth + pixelHardfill, boxLoc.y + boxHeight);
+            GL11.glVertex2f(boxLoc.x + boxWidth, boxLoc.y);
+            GL11.glVertex2f(boxLoc.x + boxWidth, boxLoc.y + boxHeight);
+            GL11.glEnd();
+        }
 
-                        // Render the fill element
-                        if (ship.isAlive()) {
-                            GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
-                                GL11.glColor4f(innerCol.getRed() / 255f, innerCol.getGreen() / 255f, innerCol.getBlue() / 255f,
-                                        alpha * (innerCol.getAlpha() / 255f)
-                                                * (1f - Global.getCombatEngine().getCombatUI().getCommandUIOpacity()));
-                                GL11.glVertex2f(boxLoc.x, boxLoc.y);
-                                GL11.glVertex2f(boxLoc.x + fboxWidth, boxLoc.y);
-                                GL11.glVertex2f(boxLoc.x, boxLoc.y + boxHeight);
-                                GL11.glVertex2f(boxLoc.x + fboxWidth, boxLoc.y + boxHeight);
-                            GL11.glEnd();
-                        }
+        // Render the fill element
+        if (ship.isAlive()) {
+            GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+            GL11.glColor4f(innerCol.getRed() / 255f, innerCol.getGreen() / 255f, innerCol.getBlue() / 255f,
+                    alpha * (innerCol.getAlpha() / 255f)
+                            * (1f - Global.getCombatEngine().getCombatUI().getCommandUIOpacity()));
+            GL11.glVertex2f(boxLoc.x, boxLoc.y);
+            GL11.glVertex2f(boxLoc.x + fboxWidth, boxLoc.y);
+            GL11.glVertex2f(boxLoc.x, boxLoc.y + boxHeight);
+            GL11.glVertex2f(boxLoc.x + fboxWidth, boxLoc.y + boxHeight);
+            GL11.glEnd();
+        }
 
-                    GL11.glDisable(GL11.GL_BLEND);
-                    GL11.glMatrixMode(GL11.GL_MODELVIEW);
-                GL11.glPopMatrix();
-            GL11.glMatrixMode(GL11.GL_PROJECTION);
-            GL11.glPopMatrix();
+        GL11.glDisable(GL11.GL_BLEND);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glPopMatrix();
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glPopMatrix();
         GL11.glPopAttrib();
 
     }

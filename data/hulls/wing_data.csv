@@ -1,0 +1,2 @@
+id,variant,tags,tier,rarity,fleet pts,op cost,formation,range,attackRunRange,attackPositionOffset,num,role,role desc,refit,base value,,,,,,,,,,,,,number
+drone_pd_example,drone_pd_example,"no_drop, no_sell, low",0,,4,0,BOX,2000,500,,1,INTERCEPTOR,Drone,5,1500,,,,,,,,,,,,,18
