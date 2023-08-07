@@ -44,7 +44,7 @@ object ActivatorManager {
         for (ship in ships) {
             getActivators(ship)?.forEach {
                 if (!Global.getCombatEngine().isPaused) {
-                    it.advanceInternal(amount)
+                    it.advanceInternal(amount * ship.mutableStats.timeMult.modifiedValue)
                 }
 
                 it.advanceEveryFrame()
