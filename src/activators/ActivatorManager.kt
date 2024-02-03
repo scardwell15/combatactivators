@@ -54,7 +54,7 @@ object ActivatorManager {
 
     @JvmStatic
     fun drawActivatorsUI(viewport: ViewportAPI) {
-        if (Global.getCombatEngine().combatUI == null || Global.getCombatEngine().combatUI.isShowingCommandUI || Global.getCombatEngine().combatUI.isShowingDeploymentDialog) {
+        if (Global.getCombatEngine().combatUI == null || Global.getCombatEngine().combatUI.isShowingCommandUI || Global.getCombatEngine().combatUI.isShowingDeploymentDialog || !Global.getCombatEngine().isUIShowingHUD) {
             return
         }
 

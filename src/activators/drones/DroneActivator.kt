@@ -21,13 +21,10 @@ abstract class DroneActivator(ship: ShipAPI) : CombatActivator(ship) {
     var activeWings: MutableMap<ShipAPI, PIDController> = LinkedHashMap()
     var formation: DroneFormation = SpinningCircleFormation()
     var droneCreationInterval: IntervalUtil = IntervalUtil(0f, 0f)
-        get() = if (hasSeparateDroneCharges()) field else chargeInterval
-        set(value) = if (hasSeparateDroneCharges()) field = value else chargeInterval = value
     var droneCharges: Int = 0
-        get() = if (hasSeparateDroneCharges()) field else charges
-        set(value) = if (hasSeparateDroneCharges()) field = value else charges = value
-
     val droneDeployInterval: IntervalUtil = IntervalUtil(0f, 0f)
+
+    var dronesToSpawn: Int = 0
 
     override fun init() {
         super.init()
@@ -37,8 +34,11 @@ abstract class DroneActivator(ship: ShipAPI) : CombatActivator(ship) {
 
         if (hasSeparateDroneCharges()) {
             droneCreationInterval.setInterval(getDroneCreationTime(), getDroneCreationTime())
-            droneCharges = getMaxDroneCharges()
+        } else {
+            droneCreationInterval.setInterval(chargeGenerationDuration, chargeGenerationDuration)
         }
+
+        dronesToSpawn = getMaxDeployedDrones()
     }
 
     /**
@@ -145,19 +145,30 @@ abstract class DroneActivator(ship: ShipAPI) : CombatActivator(ship) {
                 activeWings.forEach { (drone, _) ->
                     var damageFrom: Vector2f? = Vector2f(drone.location)
                     damageFrom = Misc.getPointWithinRadius(damageFrom, 20f)
-                    Global.getCombatEngine().applyDamage(drone, damageFrom, 1000000f, DamageType.ENERGY, 0f, true, false, drone, false)
+                    Global.getCombatEngine()
+                        .applyDamage(drone, damageFrom, 1000000f, DamageType.ENERGY, 0f, true, false, drone, false)
                 }
             }
         }
 
         if (hasSeparateDroneCharges() && (alive || generatesDroneChargesWhileShipIsDead())) {
-            if (droneCharges < getMaxDroneCharges()) {
+            if (droneCharges < getMaxDroneCharges() || (getMaxDroneCharges() == 0 && activeWings.size < getMaxDeployedDrones())) {
                 if (droneCreationInterval.intervalElapsed()) {
-                    droneCharges++
-                    droneCreationInterval.advance(0f) //reset
+                    if (getMaxDroneCharges() >= 0) {
+                        droneCharges++
+                        droneCreationInterval.advance(0f) //reset
+                    }
+                    //this interval will be left elapsed if getMaxDroneCharges returns 0.
+                    //this means that killing a drone will effectively create one after a specific amount of time, like normal fighters.
                 } else {
                     droneCreationInterval.advance(amount)
                 }
+            }
+        } else if (!hasSeparateDroneCharges()) {
+            if (maxCharges == 0 && activeWings.size < getMaxDeployedDrones() && !droneCreationInterval.intervalElapsed()) {
+                droneCreationInterval.advance(amount)
+                //this interval will be left elapsed if getMaxDroneCharges returns 0.
+                //this means that killing a drone will effectively create one after a specific amount of time, like normal fighters.
             }
         }
 
@@ -168,10 +179,35 @@ abstract class DroneActivator(ship: ShipAPI) : CombatActivator(ship) {
         activeWings = activeWings.filter { it.key.isAlive && !it.key.isHulk }.toMutableMap()
 
         if (alive || (!dronesExplodeWhenShipDies() && dronesDeployWhenShipIsDead())) {
-            while (activeWings.size < getMaxDeployedDrones() && droneCharges > 0 && (droneDeployInterval.intervalDuration == 0f || droneDeployInterval.intervalElapsed())) {
-                spawnDrone()
-                droneCharges--
-                droneDeployInterval.advance(0f)
+            if (activeWings.size < getMaxDeployedDrones()) {
+                if (shouldSpawnDrone()) {
+                    var shouldSpawnDrone = dronesToSpawn > 0
+                    if (!shouldSpawnDrone) {
+                        shouldSpawnDrone =
+                            if ((hasSeparateDroneCharges() && getMaxDroneCharges() == 0) || maxCharges == 0) {
+                                droneCreationInterval.intervalElapsed()
+                            } else if (hasSeparateDroneCharges()) {
+                                droneCharges > 0
+                            } else {
+                                charges > 0
+                            }
+                    }
+
+                    while (shouldSpawnDrone && activeWings.size < getMaxDeployedDrones() && (droneDeployInterval.intervalDuration == 0f || droneDeployInterval.intervalElapsed())) {
+                        spawnDrone()
+                        droneDeployInterval.advance(0f)
+
+                        if (dronesToSpawn > 0) {
+                            dronesToSpawn--
+                        } else if ((hasSeparateDroneCharges() && getMaxDroneCharges() == 0) || maxCharges == 0) {
+                            droneCreationInterval.advance(0f) //reset interval
+                        } else if (hasSeparateDroneCharges()) {
+                            droneCharges--
+                        } else {
+                            charges--
+                        }
+                    }
+                }
             }
         }
 
@@ -192,9 +228,26 @@ abstract class DroneActivator(ship: ShipAPI) : CombatActivator(ship) {
     }
 
     /**
+     * Whether a drone should be spawned on the next deployment interval, if the amount of drones is below the limit and we have charges to spawn the drone.
+     * To force spawn a drone, set dronesToSpawn.
+     * @return should spawn drone
+     */
+    open fun shouldSpawnDrone(): Boolean {
+        return true
+    }
+
+    /**
      * Override to not display charge filling in favor of separate drone bar if system doesn't use charges.
      */
     override fun getBarFill(): Float {
+        if (hasSeparateDroneCharges()) {
+            if (getMaxDroneCharges() == 0 && activeWings.size < getMaxDeployedDrones()) {
+                return (droneCreationInterval.elapsed / droneCreationInterval.intervalDuration).coerceIn(0f..1f)
+            }
+        } else if (maxCharges == 0 && activeWings.size < getMaxDeployedDrones()) {
+            return (droneCreationInterval.elapsed / droneCreationInterval.intervalDuration).coerceIn(0f..1f)
+        }
+
         if (!usesChargesOnActivate() && !hasSeparateDroneCharges()) {
             var fill = when (state) {
                 State.READY -> 0f
@@ -204,12 +257,14 @@ abstract class DroneActivator(ship: ShipAPI) : CombatActivator(ship) {
                 } else {
                     (inDuration + stateInterval.elapsed) / (inDuration + activeDuration)
                 }
+
                 State.OUT -> 1f - stateInterval.elapsed / (outDuration + cooldownDuration)
                 State.COOLDOWN -> 1f - (outDuration + stateInterval.elapsed) / (outDuration + cooldownDuration)
             }
 
-            return fill.coerceIn(0f, 1f)
+            return fill.coerceIn(0f..1f)
         }
+
         return super.getBarFill()
     }
 
@@ -242,17 +297,23 @@ abstract class DroneActivator(ship: ShipAPI) : CombatActivator(ship) {
             barFill, hudColor, hudColor, 0f, Vector2f.add(barLoc, Vector2f(12f, 0f), null)
         )
 
-        if (hasSeparateDroneCharges() || !usesChargesOnActivate()) {
+        if ((hasSeparateDroneCharges() && getMaxDroneCharges() > 0) || (!usesChargesOnActivate() && maxCharges > 0)) {
             val droneBarPadding = 1 * UIscaling
-            val droneBarWidth = ((59 * UIscaling - droneBarPadding * (getMaxDroneCharges() - 1)) / getMaxDroneCharges()).coerceAtLeast(1f)
+            val droneBarWidth =
+                ((59 * UIscaling - droneBarPadding * (getMaxDroneCharges() - 1)) / getMaxDroneCharges()).coerceAtLeast(
+                    1f
+                )
 
             val max = (droneCharges + 1).coerceAtMost(getMaxDroneCharges())
             for (i in 0 until max) {
-                val droneBarPos = Vector2f.add(barLoc, Vector2f(12f + droneBarWidth * i + droneBarPadding * i, -2 * UIscaling), null)
-                val droneBarFill = if (droneCharges < getMaxDroneCharges() && i == max - 1) droneCreationInterval.elapsed / droneCreationInterval.intervalDuration else 1f
+                val droneBarPos =
+                    Vector2f.add(barLoc, Vector2f(12f + droneBarWidth * i + droneBarPadding * i, -2 * UIscaling), null)
+                val droneBarFill =
+                    if (droneCharges < getMaxDroneCharges() && i == max - 1) droneCreationInterval.elapsed / droneCreationInterval.intervalDuration else 1f
                 MagicLibRendering.addBar(
                     ship,
-                    droneBarFill, hudColor, hudColor, 0f, droneBarPos, 2 * UIscaling, droneBarWidth, false)
+                    droneBarFill, hudColor, hudColor, 0f, droneBarPos, 2 * UIscaling, droneBarWidth, false
+                )
             }
         }
     }

@@ -5,7 +5,7 @@
     "utility": "true",
     "version": { "major":"1", "minor": "1", "patch": "1" },
     "description": "Abilities that can be activated during combat.",
-    "gameVersion": "0.96a",
+    "gameVersion": "0.97a",
     "jars":["jars/CombatActivators.jar"],
     "modPlugin":"activators.CombatActivatorsModPlugin",
     "dependencies": [

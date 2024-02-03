@@ -19,7 +19,7 @@ public class PIDController {
     public float lastErrorR = 0;
 
     //strafe accel is this % of forward accel, used as a mult for the y factors
-    public final float strafeRatio = 0.5f;
+    public float strafeRatio = 0.5f;
 
     //proporional values
     public final float KpX;
