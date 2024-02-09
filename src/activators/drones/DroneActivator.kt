@@ -240,13 +240,18 @@ abstract class DroneActivator(ship: ShipAPI) : CombatActivator(ship) {
      * Override to not display charge filling in favor of separate drone bar if system doesn't use charges.
      */
     override fun getBarFill(): Float {
-        if (hasSeparateDroneCharges()) {
-            if (getMaxDroneCharges() == 0 && activeWings.size < getMaxDeployedDrones()) {
+        if (activeWings.size < getMaxDeployedDrones()) {
+            if (hasSeparateDroneCharges()) {
+                if (droneCharges == 0) {
+                    return (droneCreationInterval.elapsed / droneCreationInterval.intervalDuration).coerceIn(0f..1f)
+                }
+            } else if (maxCharges > 0 && charges == 0 && activeWings.size < getMaxDeployedDrones()) {
+                return (chargeInterval.elapsed / chargeInterval.intervalDuration).coerceIn(0f..1f)
+            } else {
                 return (droneCreationInterval.elapsed / droneCreationInterval.intervalDuration).coerceIn(0f..1f)
             }
-        } else if (maxCharges == 0 && activeWings.size < getMaxDeployedDrones()) {
-            return (droneCreationInterval.elapsed / droneCreationInterval.intervalDuration).coerceIn(0f..1f)
         }
+
 
         if (!usesChargesOnActivate() && !hasSeparateDroneCharges()) {
             var fill = when (state) {
@@ -284,10 +289,9 @@ abstract class DroneActivator(ship: ShipAPI) : CombatActivator(ship) {
         MagicLibRendering.addText(ship, ammoText, hudColor, Vector2f.add(barLoc, Vector2f(0f, 10f), null))
         MagicLibRendering.setTextAligned(LazyFont.TextAlignment.LEFT)
 
-        val stateText = stateText
-        if (stateText.isNotEmpty()) {
+        if (stateText !=  null && stateText.isNotEmpty()) {
             MagicLibRendering.addText(
-                ship, getStateText(),
+                ship, stateText,
                 hudColor, Vector2f.add(barLoc, Vector2f((12 + 4 + 59).toFloat(), 10f), null)
             )
         }

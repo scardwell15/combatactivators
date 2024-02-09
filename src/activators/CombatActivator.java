@@ -264,6 +264,39 @@ public abstract class CombatActivator {
         return Keyboard.isKeyDown(Keyboard.getKeyIndex(getKey()));
     }
 
+    public void activate() {
+        onActivate();
+
+        if (isToggle() && state == State.ACTIVE && stateInterval.intervalElapsed()) {
+            activeElapsed = false;
+            setState(State.OUT);
+        } else {
+            setState(State.IN);
+            if (hasCharges() && usesChargesOnActivate()) {
+                charges--;
+            }
+        }
+    }
+
+    public void setState(State newState) {
+        if (newState == State.IN) {
+            state = State.IN;
+            stateInterval.setInterval(getInDuration(), getInDuration());
+        } else if (newState == State.ACTIVE) {
+            state = State.ACTIVE;
+            stateInterval.setInterval(getActiveDuration(), getActiveDuration());
+        } else if (newState == State.OUT) {
+            state = State.OUT;
+            stateInterval.setInterval(getOutDuration(), getOutDuration());
+        } else if (newState == State.COOLDOWN)  {
+            state = State.COOLDOWN;
+            stateInterval.setInterval(getCooldownDuration(), getCooldownDuration());
+        } else if (newState == State.READY) {
+            state = State.READY;
+        }
+        onStateSwitched(newState);
+    }
+
     public void advanceInternal(float amount) {
         boolean alive = ship.isAlive() && !ship.isHulk() && ship.getOwner() != 100;
         if (!alive) {
@@ -282,9 +315,11 @@ public abstract class CombatActivator {
         }
 
         if (charges < getMaxCharges()) {
-            chargeInterval.advance(amount);
             if (chargeInterval.intervalElapsed()) {
                 charges++;
+                chargeInterval.setInterval(getChargeGenerationDuration(), getChargeGenerationDuration());
+            } else {
+                chargeInterval.advance(amount);
             }
         }
 
@@ -303,45 +338,26 @@ public abstract class CombatActivator {
             boolean shipActivate = canActivate();
 
             if (internalActivate && shipActivate) {
-                onActivate();
-
-                if (isToggle() && state == State.ACTIVE && stateInterval.intervalElapsed()) {
-                    activeElapsed = false;
-                    state = State.OUT;
-                    stateInterval.setInterval(getOutDuration(), getOutDuration());
-                } else {
-                    state = State.IN;
-                    stateInterval.setInterval(getInDuration(), getInDuration());
-                    if (hasCharges() && usesChargesOnActivate()) {
-                        charges--;
-                    }
-                }
+                activate();
             }
         }
 
         if (stateInterval.intervalElapsed() || stateInterval.getIntervalDuration() == 0f) {
             if (state == State.IN) {
-                state = State.ACTIVE;
-                stateInterval.setInterval(getActiveDuration(), getActiveDuration());
+                setState(State.ACTIVE);
             } else if (state == State.OUT) {
                 activeElapsed = false;
-                state = State.COOLDOWN;
-                stateInterval.setInterval(getCooldownDuration(), getCooldownDuration());
+                setState(State.COOLDOWN);
                 onFinished();
             } else if (state == State.COOLDOWN) {
-                state = State.READY;
+                setState(State.READY);
             } else if (state == State.ACTIVE) {
                 activeElapsed = true;
 
                 if (!isToggle()) {
-                    state = State.OUT;
-                    stateInterval.setInterval(getOutDuration(), getOutDuration());
+                    setState(State.OUT);
                 }
             }
-        }
-
-        if (state != initialState) {
-            onStateSwitched(initialState);
         }
 
         advance(amount);
@@ -365,25 +381,6 @@ public abstract class CombatActivator {
 
     public State getState() {
         return state;
-    }
-
-    /**
-     * This method does NOT call onStateSwitched.
-     *
-     * @param state
-     */
-    public void setStateNoHooks(State state) {
-        this.state = state;
-    }
-
-    /**
-     * This method does call onStateSwitched.
-     *
-     * @param state
-     */
-    public void setState(State state) {
-        this.state = state;
-        onStateSwitched(state);
     }
 
     public int getCharges() {
