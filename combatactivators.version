@@ -2,10 +2,11 @@
     "masterVersionFile":"https://raw.githubusercontent.com/scardwell15/combatactivators/main/combatactivators.version",
     "modName":"Combat Activators",
     "modThreadId":26410,
+    "directDownloadURL": "https://github.com/scardwell15/combatactivators/releases/download/v1.2.0/Combat-Activators-v1.2.0.zip",
     "modVersion":
     {
         "major":1,
-        "minor":1,
-        "patch":3
+        "minor":2,
+        "patch":0
     }
 }
