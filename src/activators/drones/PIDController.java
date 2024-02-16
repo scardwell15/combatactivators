@@ -31,6 +31,13 @@ public class PIDController {
     public final float KdY;
     public final float KdR;
 
+    //if error for either value is *BELOW* this, then movement/rotation will not be performed.
+    public float allowedLocationalErrorSquared = 1f;
+    public float allowedRotationalError = 1f;
+
+    //if locational error is below the defined allowed value, then deceleration will be performed.
+    public boolean decelerateIfBelowError = true;
+
     /**
      * @param Kp movement proportional. higher value increases overshoot.
      * @param Kd movement derivative. higher value dampens oscillation.
@@ -46,12 +53,21 @@ public class PIDController {
         this.KdX = Kd;
         this.KdY = Kd * strafeRatio;
         this.KdR = Rd;
+    }
 
+    public PIDController copy() {
+        return new PIDController(KpX, KdX, KpR, KdR);
     }
 
     public void move(Vector2f dest, ShipAPI drone) {
-
         Vector2f diff = Vector2f.sub(dest, drone.getLocation(), new Vector2f());
+        if (diff.lengthSquared() < allowedLocationalErrorSquared) {
+            if (decelerateIfBelowError) {
+                drone.giveCommand(ShipCommand.DECELERATE, null, 0);
+            }
+            return;
+        }
+
         //this one line is from tomato
         //rotate the vector for ??? reasons
         VectorUtils.rotate(diff, 90f - drone.getFacing());
@@ -75,6 +91,9 @@ public class PIDController {
     public void rotate(float destFacing, ShipAPI drone) {
 
         float rotationError = MathUtils.getShortestRotation(drone.getFacing(), destFacing);
+        if (Math.abs(rotationError) < allowedRotationalError) {
+            return;
+        }
 
         float derivativeR = (rotationError - lastErrorR) / Global.getCombatEngine().getElapsedInLastFrame();
         float outputR = KpR * rotationError + KdR * derivativeR;
