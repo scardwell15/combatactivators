@@ -11,9 +11,11 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
+import java.util.Objects;
 
 public abstract class CombatActivator {
-    protected String key = "N/A";
+    public static String BLANK_KEY = "N/A";
+    protected String key = BLANK_KEY;
     protected int keyIndex = -1;
     protected boolean inited = false;
     protected boolean calledOnDeath = false;
@@ -606,6 +608,10 @@ public abstract class CombatActivator {
     }
 
     public String getKeyText() {
+        if (!Objects.equals(key, BLANK_KEY)) {
+            return key;
+        }
+
         int keycode = -1;
         if (canAssignKey() && getKeyIndex() >= 0 && ActivatorManager.INSTANCE.getKeyList().size() > getKeyIndex()) {
             keycode = ActivatorManager.INSTANCE.getKeyList().get(getKeyIndex());
@@ -613,7 +619,7 @@ public abstract class CombatActivator {
 
         switch (keycode) {
             case -1:
-                return "N/A";
+                return BLANK_KEY;
             case Keyboard.KEY_LMENU:
                 return "L-ALT";
             case Keyboard.KEY_RMENU:

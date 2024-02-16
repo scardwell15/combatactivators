@@ -13,29 +13,38 @@ object ActivatorManager {
 
     fun initialize() {
         reloadKeys()
-        LunaSettings.addListener(LunaKeybindSettingsListener())
+        LunaSettings.addSettingsListener(LunaKeybindSettingsListener())
     }
 
     @JvmStatic
     fun addActivator(ship: ShipAPI, activator: CombatActivator) {
-        var activators: MutableMap<Class<*>, CombatActivator>? =
-            ship.customData["combatActivators"] as MutableMap<Class<*>, CombatActivator>?
-        if (activators == null) {
-            activators = LinkedHashMap()
-            ship.setCustomData("combatActivators", activators)
+        var activatorData: MutableMap<Class<out CombatActivator>, CombatActivator>? = getActivatorMap(ship)
+        if (activatorData == null) {
+            activatorData = LinkedHashMap()
+            ship.setCustomData("combatActivators", activatorData)
         }
 
-        if (!activators.containsKey(activator.javaClass)) {
-            activators[activator.javaClass] = activator
+        activatorData.let { activators ->
+            if (!activators.containsKey(activator.javaClass)) {
+                activators[activator.javaClass] = activator
 
-            if (!activator.canAssignKey() || activators.size > keyList.size) {
-                activator.key = "N/A"
-            } else {
-                activator.keyIndex = activators.size - 1
+                if (!activator.canAssignKey() || activators.size > keyList.size) {
+                    activator.key = CombatActivator.BLANK_KEY
+                } else {
+                    activator.keyIndex = activators
+                        .filterValues { it.canAssignKey() }
+                        .count()
+                }
+
+                activator.init()
             }
-
-            activator.init()
         }
+    }
+
+    @JvmStatic
+    fun removeActivator(ship: ShipAPI, activatorClass: Class<out CombatActivator>) {
+        val activatorData: MutableMap<Class<out CombatActivator>, CombatActivator> = getActivatorMap(ship) ?: return
+        activatorData.remove(activatorClass)
     }
 
     @JvmStatic
@@ -81,11 +90,16 @@ object ActivatorManager {
 
     @JvmStatic
     fun getActivators(ship: ShipAPI): List<CombatActivator>? {
-        val map = ship.customData["combatActivators"] as Map<Class<*>, CombatActivator>?
+        val map = getActivatorMap(ship)
         if (map != null) {
             return ArrayList(map.values)
         }
         return null
+    }
+
+    @JvmStatic
+    fun getActivatorMap(ship: ShipAPI): MutableMap<Class<out CombatActivator>, CombatActivator>? {
+        return ship.customData["combatActivators"] as MutableMap<Class<out CombatActivator>, CombatActivator>? ?: return null
     }
 
     fun reloadKeys() {

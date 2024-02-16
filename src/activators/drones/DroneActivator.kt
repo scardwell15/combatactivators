@@ -276,7 +276,7 @@ abstract class DroneActivator(ship: ShipAPI) : CombatActivator(ship) {
     override fun drawHUDBar(viewport: ViewportAPI, barLoc: Vector2f) {
         var barLoc = barLoc
         MagicLibRendering.setTextAligned(LazyFont.TextAlignment.LEFT)
-        val nameText: String = if (canAssignKey()) {
+        val nameText: String = if (canAssignKey() || key != BLANK_KEY) {
             val keyText = keyText
             String.format("%s (%s)", displayText, keyText)
         } else {
